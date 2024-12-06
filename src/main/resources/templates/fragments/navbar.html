@@ -1,0 +1,73 @@
+<nav class="bg-white shadow-lg" th:fragment="navbar">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="flex justify-between">
+      <div class="flex space-x-7">
+        <div class="flex items-center py-4">
+          <a href="/" class="font-bold text-2xl text-green-600"
+            >Waste Transport Management</a
+          >
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <div sec:authorize="!isAuthenticated()">
+          <a
+            href="/login"
+            class="py-2 px-4 text-gray-700 hover:text-green-600 transition duration-300"
+            >Login</a
+          >
+          <a
+            href="/register"
+            class="py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700 transition duration-300"
+            >Register</a
+          >
+        </div>
+
+        <div
+          sec:authorize="isAuthenticated()"
+          class="flex items-center space-x-4"
+        >
+          <a
+            sec:authorize="hasRole('ADMIN')"
+            href="/admin"
+            class="py-2 px-4 bg-gray-800 text-white rounded-md hover:bg-gray-900 transition duration-300"
+          >
+            Admin Dashboard
+          </a>
+
+          <div class="relative group">
+            <button
+              class="flex items-center space-x-2 py-2 px-4 text-gray-700 hover:text-green-600"
+            >
+              <span sec:authentication="name">Username</span>
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+            <div
+              class="absolute right-0 z-50 hidden group-hover:block w-48 rounded-md shadow-lg py-1 bg-white"
+            >
+              <form th:action="@{/logout}" method="post" class="block">
+                <button
+                  type="submit"
+                  class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Logout
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>

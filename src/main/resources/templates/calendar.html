@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Waste Collection Calendar</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.3/cdn.min.js"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body
+    class="bg-gray-50"
+    x-data="{ showEventModal: false, selectedDate: null, selectedEvents: [] }"
+  >
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+      <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center">
+          <h1 class="text-3xl font-bold tracking-tight text-gray-900">
+            Waste Collection Calendar
+          </h1>
+          <div class="flex space-x-4">
+            <a
+              th:href="@{/calendar(year=${prevMonth.year},month=${prevMonth.monthValue})}"
+              class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Previous
+            </a>
+            <span
+              class="inline-flex items-center px-4 py-2 text-lg font-medium text-gray-900"
+            >
+              <span th:text="${#temporals.format(currentDate, 'MMMM yyyy')}"
+                >January 2024</span
+              >
+            </span>
+            <a
+              th:href="@{/calendar(year=${nextMonth.year},month=${nextMonth.monthValue})}"
+              class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Next
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <!-- Calendar Grid -->
+      <div class="bg-white rounded-lg shadow overflow-hidden">
+        <!-- Days of Week Header -->
+        <div class="grid grid-cols-7 gap-px bg-gray-200 border-b">
+          <div
+            th:each="day : ${'MON,TUE,WED,THU,FRI,SAT,SUN'.split(',')}"
+            class="bg-gray-50 py-2 text-center text-sm font-semibold text-gray-900"
+          >
+            <span th:text="${day}">Mon</span>
+          </div>
+        </div>
+
+        <!-- Calendar Days -->
+        <div class="grid grid-cols-7 gap-px bg-gray-200">
+          <th:block
+            th:with="firstDay=${currentDate.withDayOfMonth(1)},
+                                  lastDay=${currentDate.withDayOfMonth(currentDate.lengthOfMonth())},
+                                  startOffset=${firstDay.getDayOfWeek().getValue() - 1}"
+          >
+            <!-- Previous month padding -->
+            <div
+              th:each="i : ${#numbers.sequence(0, startOffset - 1)}"
+              class="bg-gray-50 py-8 px-3 h-32"
+            ></div>
+
+            <!-- Current month days -->
+            <div
+              th:each="day : ${#numbers.sequence(1, currentDate.lengthOfMonth())}"
+              class="bg-white py-2 px-3 h-32 relative group hover:bg-gray-50"
+              th:with="currentLoop=${day}"
+              @click="
+                            selectedDate = '[[${currentDate.withDayOfMonth(currentLoop)}]]';
+                            selectedEvents = [
+                                [# th:each='event : ${events}']
+                                    [# th:if='${event.sdate.getDayOfMonth() == currentLoop}']
+                                        {
+                                            type: '[[${event.service.wtype}]]',
+                                            description: '[[${event.service.description}]]'
+                                        },
+                                    [/]
+                                [/]
+                            ];
+                            showEventModal = selectedEvents.length > 0;
+                         "
+            >
+              <!-- Day Number -->
+              <div class="font-semibold text-gray-900" th:text="${day}">1</div>
+
+              <!-- Events for the day -->
+              <div class="mt-1 space-y-1">
+                <div
+                  th:each="event : ${events}"
+                  th:if="${event.sdate.getDayOfMonth() == day}"
+                  class="flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                  th:classappend="${'bg-' + (#strings.toLowerCase(event.service.wtype) == 'recycling' ? 'green' : 
+                                                          #strings.toLowerCase(event.service.wtype) == 'waste' ? 'red' : 
+                                                          #strings.toLowerCase(event.service.wtype) == 'organic' ? 'yellow' : 'blue') + '-100'}"
+                >
+                  <span
+                    th:text="${event.service.wtype}"
+                    th:classappend="${'text-' + (#strings.toLowerCase(event.service.wtype) == 'recycling' ? 'green' : 
+                                                                   #strings.toLowerCase(event.service.wtype) == 'waste' ? 'red' : 
+                                                                   #strings.toLowerCase(event.service.wtype) == 'organic' ? 'yellow' : 'blue') + '-800'}"
+                  >
+                    Event
+                  </span>
+                </div>
+              </div>
+            </div>
+          </th:block>
+        </div>
+      </div>
+
+      <!-- Event Modal -->
+      <div
+        x-show="showEventModal"
+        class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+        x-transition:enter="ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+      >
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+          <div
+            class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0"
+          >
+            <div
+              class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6"
+            >
+              <div class="absolute right-0 top-0 pr-4 pt-4">
+                <button
+                  type="button"
+                  @click="showEventModal = false"
+                  class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none"
+                >
+                  <span class="sr-only">Close</span>
+                  <svg
+                    class="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div class="sm:flex sm:items-start">
+                <div
+                  class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full"
+                >
+                  <h3
+                    class="text-base font-semibold leading-6 text-gray-900"
+                    x-text="'Events for ' + selectedDate"
+                  ></h3>
+                  <div class="mt-4 space-y-3">
+                    <template x-for="event in selectedEvents" :key="event.type">
+                      <div class="rounded-md bg-gray-50 p-4">
+                        <div
+                          class="font-medium text-gray-900"
+                          x-text="event.type"
+                        ></div>
+                        <div
+                          class="mt-1 text-sm text-gray-500"
+                          x-text="event.description"
+                        ></div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
